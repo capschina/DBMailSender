@@ -20,21 +20,25 @@ public class DBQueryer
     private static final Logger logger = LoggerFactory.getLogger(DBQueryer.class);
 
 
-    public static Map<String, Object> getEmailInfo(String userId) throws SQLException
+    public static List<Map<String, Object>> getEmailInfo(String userId) throws SQLException
     {
 
-        String sql = "select TITLE, USER_EMAIL, MSG from TB_EMAIL where USER_ID = ?";
+        String sql =
+            "select SEQ, TITLE, USER_EMAIL, MSG from TB_EMAIL where USER_ID = ? and IS_NEW = 1";
 
         QueryRunner run = new QueryRunner(DataSourceHolder.getDataSource(), true);
         ResultSetHandler<List<Map<String, Object>>> h = new MapListHandler();
 
-        List<Map<String, Object>> rs = run.query(sql, h, userId);
-        if (rs == null  | rs.isEmpty())
-        {
-            logger.error("no such user. user id = {}", userId);
-            return null;
-        }
+        return run.query(sql, h, userId);
+    }
 
-        return rs.get(0);
+    public static void deleteMail(Long seq) throws SQLException
+    {
+        String sql = "update TB_EMAIL set IS_NEW = 0 where SEQ = ?";
+        QueryRunner run = new QueryRunner(DataSourceHolder.getDataSource(), true);
+
+        int cnt = run.update(sql, new Object[] {seq});
+        if (cnt != 1)
+            logger.error("failed to deleteMail. seq = {}", seq);
     }
 }
