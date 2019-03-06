@@ -1,20 +1,18 @@
 package com.test.DBMailSender;
 
-import java.io.FileInputStream;
-import java.util.Map;
-import java.util.Properties;
-
+import ch.qos.logback.classic.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.qos.logback.classic.Level;
+import java.io.FileInputStream;
+import java.util.Properties;
 
 public class App 
 {
     private static final Logger logger = LoggerFactory.getLogger(App.class);
     private static final Properties appProps;
-
+    private static Worker task = null;
     static
     {
         appProps = new Properties();
@@ -35,12 +33,13 @@ public class App
         addShutdownHook();
 
         setLogLevel();
-        
-        Map<String, Object> mailInfo = DBQueryer.getEmailInfo("user");
-        MailSender.sendSimpleMail(
-            (String)mailInfo.get("USER_EMAIL"),
-            (String)mailInfo.get("TITLE"),
-            (String)mailInfo.get("MSG"));
+
+        // start worker task
+        task = new Worker();
+        task.setName("Worker Task");
+        task.start();
+
+        task.join();
         
         logger.info("End of main() !!!");
     }
@@ -74,6 +73,10 @@ public class App
             {
                 // 자원해제
                 DataSourceHolder.destroy();
+
+                task.requestStop();
+                task.join();
+
                 Thread.sleep(1000);
             }
             catch (Exception e) 

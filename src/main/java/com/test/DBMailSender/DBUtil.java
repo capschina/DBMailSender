@@ -29,7 +29,7 @@ public class DBUtil
         return (obj == null) ? false : (boolean)obj; 
     }
     
-    // null 허용
+    // allow null
     public static Integer toInteger(BigDecimal bd)
     {
         return (bd == null) ? null : bd.intValue(); 
